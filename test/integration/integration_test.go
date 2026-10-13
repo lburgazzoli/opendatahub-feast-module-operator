@@ -74,7 +74,7 @@ var (
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	k8sClient              client.Client
-	k                      *k8sm.Matcher
+	k                      *k8sm.Operations
 	operatorReleaseVersion string
 	operatorPlatformType   string
 	testScheme             = runtime.NewScheme()
@@ -216,7 +216,7 @@ func runTestMain(m *testing.M) int {
 	}
 
 	k8sClient = mgr.GetClient()
-	k = k8sm.New(k8sClient, testScheme)
+	k = k8sm.Using(k8sClient)
 
 	_ = directClient.Create(ctx, &rbacv1.ClusterRole{
 		ObjectMeta: ctrl.ObjectMeta{Name: "integration-test-role"},

@@ -91,7 +91,7 @@ func (ft *foundationTests) testModuleCRDInstalled(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.moduleCRD)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.metadata.name == "%s"`, moduleCRDName),
+		jq.Matchf(`.metadata.name == "%s"`, moduleCRDName),
 	)
 }
 
@@ -103,8 +103,8 @@ func (ft *foundationTests) testOperatorConfigMap(t *testing.T) {
 	// its managed keys into it. The platformVersion key itself is
 	// platform-managed and must not be shipped by the module.
 	g.Eventually(k.Get(ft.operatorCfgMap)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.metadata.name == "%s"`, feastoperatorcontroller.PlatformConfigCMName),
-		jq.Match(`.data."%s" == null`, moduleconfig.KeyPlatformVersion),
+		jq.Matchf(`.metadata.name == "%s"`, feastoperatorcontroller.PlatformConfigCMName),
+		jq.Matchf(`.data."%s" == null`, moduleconfig.KeyPlatformVersion),
 	))
 }
 
@@ -126,7 +126,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 
 	// The release recorded on the workload matches the injected platform type.
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.metadata.annotations."%s" == "%s"`, annotationType, platformType),
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`, annotationType, platformType),
 	)
 
 	// RELATED_IMAGE_CRON_JOB is not part of the operator's image param map,
@@ -135,7 +135,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(moduleconfig.ParsePlatformType(platformType)), "RELATED_IMAGE_CRON_JOB")
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),
+		jq.Matchf(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),
 	)
 }
 
@@ -172,19 +172,19 @@ func (ft *foundationTests) testDeploymentsAvailable(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.operatorDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.metadata.namespace == "%s"`, ft.operatorNamespace),
+		jq.Matchf(`.metadata.namespace == "%s"`, ft.operatorNamespace),
 		jq.Match(`.status.readyReplicas >= 1`),
-		jq.Match(`.metadata.labels."%s" == "%s"`, labelAppName, operatorDeployName),
+		jq.Matchf(`.metadata.labels."%s" == "%s"`, labelAppName, operatorDeployName),
 	))
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.metadata.namespace == "%s"`, ft.operatorNamespace),
+		jq.Matchf(`.metadata.namespace == "%s"`, ft.operatorNamespace),
 		jq.Match(`.status.readyReplicas >= 1`),
-		jq.Match(`.metadata.labels."%s" == "true"`, odhComponentLabel),
-		jq.Match(`.metadata.labels."%s" == "feast-operator"`, labelAppName),
-		jq.Match(`.metadata.labels."%s" == "feastoperator"`, labelK8sPartOf),
-		jq.Match(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
-		jq.Match(`.metadata.labels."%s" == "controller-manager"`, labelControlPlane),
+		jq.Matchf(`.metadata.labels."%s" == "true"`, odhComponentLabel),
+		jq.Matchf(`.metadata.labels."%s" == "feast-operator"`, labelAppName),
+		jq.Matchf(`.metadata.labels."%s" == "feastoperator"`, labelK8sPartOf),
+		jq.Matchf(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
+		jq.Matchf(`.metadata.labels."%s" == "controller-manager"`, labelControlPlane),
 	))
 
 	deploys := &appsv1.DeploymentList{}
@@ -221,7 +221,7 @@ func (ft *foundationTests) testReleaseStatus(t *testing.T) {
 	g.Eventually(k.Get(ft.module)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
 		jq.Match(`.status.releases | length > 0`),
 		jq.Match(`.status.releases[] | select(.name == "Feast") | .version != ""`),
-		jq.Match(`.status.releases[] | select(.name == "platform") | .version == "%s"`,
+		jq.Matchf(`.status.releases[] | select(.name == "platform") | .version == "%s"`,
 			e2ePlatformVersion),
 	))
 }
@@ -233,19 +233,19 @@ func (ft *foundationTests) testPlatformLabels(t *testing.T) {
 	g.Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(module), module)).To(Succeed())
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
-		jq.Match(`.metadata.labels."%s" == "true"`, odhComponentLabel),
-		jq.Match(`.metadata.labels."%s" == "feast-operator"`, labelAppName),
-		jq.Match(`.metadata.labels."%s" == "feastoperator"`, labelK8sPartOf),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
+		jq.Matchf(`.metadata.labels."%s" == "true"`, odhComponentLabel),
+		jq.Matchf(`.metadata.labels."%s" == "feast-operator"`, labelAppName),
+		jq.Matchf(`.metadata.labels."%s" == "feastoperator"`, labelK8sPartOf),
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationInstanceName,
 			module.GetName()),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationInstanceUID,
 			string(module.GetUID())),
-		jq.Match(`.metadata.annotations."%s" != null and .metadata.annotations."%s" != ""`,
+		jq.Matchf(`.metadata.annotations."%s" != null and .metadata.annotations."%s" != ""`,
 			annotationType, annotationType),
-		jq.Match(`.metadata.annotations."%s" != null and .metadata.annotations."%s" != "" and .metadata.annotations."%s" != "unknown"`,
+		jq.Matchf(`.metadata.annotations."%s" != null and .metadata.annotations."%s" != "" and .metadata.annotations."%s" != "unknown"`,
 			annotationVersion, annotationVersion, annotationVersion),
 	))
 }
@@ -254,7 +254,7 @@ func (ft *foundationTests) testOwnerReferences(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.metadata.ownerReferences[] | select(.kind == "FeastOperator") | .name == "%s"`,
+		jq.Matchf(`.metadata.ownerReferences[] | select(.kind == "FeastOperator") | .name == "%s"`,
 			componentsv1alpha1.FeastOperatorInstanceName),
 	)
 }
@@ -328,19 +328,19 @@ func (ft *foundationTests) testSpecProjectedToOperand(t *testing.T) {
 	g.Expect(k8sClient.Patch(ctx, patched, client.MergeFrom(current))).To(Succeed())
 
 	g.Eventually(k.Get(ft.module)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.spec.oidc.issuerURL == "%s"`, testOIDCIssuerURL),
+		jq.Matchf(`.spec.oidc.issuerURL == "%s"`, testOIDCIssuerURL),
 		jq.Match(`.status.observedGeneration == .metadata.generation`),
 		jq.Match(`.status.conditions[] | select(.type == "Ready") | .status == "True"`),
 	))
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "%s") | .value == "%s"`,
+		jq.Matchf(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "%s") | .value == "%s"`,
 			oidcIssuerEnvName, testOIDCIssuerURL),
 	)
 
 	// Platform-managed spec field must not be overwritten on subsequent reconciles.
 	g.Consistently(k.Get(ft.module)).WithContext(ctx).WithTimeout(10 * time.Second).WithPolling(interval).Should(
-		jq.Match(`.spec.oidc.issuerURL == "%s"`, testOIDCIssuerURL),
+		jq.Matchf(`.spec.oidc.issuerURL == "%s"`, testOIDCIssuerURL),
 	)
 }
 

@@ -32,7 +32,7 @@ func (ft *foundationTests) testModuleCRDInstalled(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.moduleCRD)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.metadata.name == "%s"`, moduleCRDName),
+		jq.Matchf(`.metadata.name == "%s"`, moduleCRDName),
 	)
 }
 
@@ -60,7 +60,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(moduleconfig.ParsePlatformType(operatorPlatformType)), "RELATED_IMAGE_CRON_JOB")
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),
+		jq.Matchf(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),
 	)
 }
 
@@ -70,7 +70,7 @@ func (ft *foundationTests) testReleaseStatus(t *testing.T) {
 	g.Eventually(k.Get(ft.module)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
 		jq.Match(`.status.releases | length > 0`),
 		jq.Match(`.status.releases[] | select(.name == "Feast") | .version != ""`),
-		jq.Match(`.status.releases[] | select(.name == "platform") | .version == "%s"`,
+		jq.Matchf(`.status.releases[] | select(.name == "platform") | .version == "%s"`,
 			testPlatformVersion),
 	))
 }
@@ -79,17 +79,17 @@ func (ft *foundationTests) testPlatformLabels(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(
-		jq.Match(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.labels."%s" == "feastoperator"`, labelPartOf),
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationInstanceName,
 			ft.module.GetName()),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationInstanceUID,
 			string(ft.module.GetUID())),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationType,
 			operatorPlatformType),
-		jq.Match(`.metadata.annotations."%s" == "%s"`,
+		jq.Matchf(`.metadata.annotations."%s" == "%s"`,
 			annotationVersion,
 			operatorReleaseVersion),
 	))
@@ -99,7 +99,7 @@ func (ft *foundationTests) testOwnerReferences(t *testing.T) {
 	g := NewWithT(t)
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
-		jq.Match(`.metadata.ownerReferences[] | select(.kind == "FeastOperator") | .name == "%s"`,
+		jq.Matchf(`.metadata.ownerReferences[] | select(.kind == "FeastOperator") | .name == "%s"`,
 			componentsv1alpha1.FeastOperatorInstanceName),
 	)
 }
