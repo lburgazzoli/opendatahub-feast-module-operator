@@ -121,7 +121,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 
 	platformType := envVarValue(deploy, platformTypeEnvVar)
 	if platformType == "" {
-		platformType = moduleconfig.DefaultPlatformType
+		platformType = string(moduleconfig.DefaultPlatformType)
 	}
 
 	// The release recorded on the workload matches the injected platform type.
@@ -132,7 +132,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 	// RELATED_IMAGE_CRON_JOB is not part of the operator's image param map,
 	// so the value on the deployed workload is exactly the one bundled in
 	// the selected overlay's params.env.
-	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(platformType), "RELATED_IMAGE_CRON_JOB")
+	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(moduleconfig.ParsePlatformType(platformType)), "RELATED_IMAGE_CRON_JOB")
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
 		jq.Match(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),

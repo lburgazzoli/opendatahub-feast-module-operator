@@ -48,7 +48,7 @@ const (
 	KeyDataRegistryEnabled = "data-registry-enabled"
 
 	DefaultApplicationsNS  = "opendatahub"
-	DefaultPlatformType    = "unknown"
+	DefaultPlatformType    = PlatformTypeUnknown
 	DefaultPlatformVersion = "unknown"
 
 	DefaultMetricsBindAddr    = ":8080"
@@ -61,12 +61,6 @@ const (
 	DefaultFeatureStoreEnabled = true
 	DefaultDataRegistryEnabled = true
 
-	// Platform-type display names, matching the values written by the
-	// orchestrator / Makefile into the platform-type config key.
-	PlatformTypeOpenDataHub      = "Open Data Hub"
-	PlatformTypeSelfManagedRhoai = "OpenShift AI Self-Managed"
-	PlatformTypeManagedRhoai     = "OpenShift AI Cloud Service"
-
 	// ConfigPathEnvVar is the environment variable that points to the mounted
 	// ConfigMap directory (or a single config file).
 	ConfigPathEnvVar = "ODH_MODULE_OPERATOR_CONFIGURATION_PATH"
@@ -75,6 +69,33 @@ const (
 	// configuration values (e.g. ODH_MODULE_OPERATOR_PLATFORM_TYPE).
 	EnvPrefix = "ODH_MODULE_OPERATOR"
 )
+
+// PlatformType is the platform the operator is running on, as reported by
+// the orchestrator through the platform-type config key.
+type PlatformType string
+
+const (
+	// Platform-type display names, matching the values written by the
+	// orchestrator / Makefile into the platform-type config key.
+	PlatformTypeUnknown          PlatformType = "unknown"
+	PlatformTypeOpenDataHub      PlatformType = "Open Data Hub"
+	PlatformTypeSelfManagedRhoai PlatformType = "OpenShift AI Self-Managed"
+	PlatformTypeManagedRhoai     PlatformType = "OpenShift AI Cloud Service"
+)
+
+// ParsePlatformType normalizes a raw config value to a known PlatformType.
+// Unrecognized values return PlatformTypeUnknown (lenient by design —
+// preserves the "unknown → ODH overlay" fallback).
+func ParsePlatformType(s string) PlatformType {
+	switch pt := PlatformType(s); pt {
+	case PlatformTypeOpenDataHub,
+		PlatformTypeSelfManagedRhoai,
+		PlatformTypeManagedRhoai:
+		return pt
+	default:
+		return PlatformTypeUnknown
+	}
+}
 
 // structuredExtensions is the set of file extensions that are parsed as
 // structured config (YAML, JSON) rather than simple key-value pairs.
@@ -96,7 +117,7 @@ var structuredExtensions = map[string]bool{
 type Config struct {
 	ManifestsPath         string           `mapstructure:"manifests-path"`
 	ApplicationsNamespace string           `mapstructure:"applications-namespace"`
-	PlatformType          string           `mapstructure:"platform-type"`
+	PlatformType          PlatformType     `mapstructure:"platform-type"`
 	PlatformVersion       string           `mapstructure:"platformVersion"`
 	FeatureStoreEnabled   bool             `mapstructure:"feature-store-enabled"`
 	DataRegistryEnabled   bool             `mapstructure:"data-registry-enabled"`

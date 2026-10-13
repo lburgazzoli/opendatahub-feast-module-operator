@@ -161,7 +161,7 @@ func runTestMain(m *testing.M) int {
 	// up the injected value rather than comparing the config against itself.
 	operatorPlatformType = os.Getenv("ODH_MODULE_OPERATOR_PLATFORM_TYPE")
 	if operatorPlatformType == "" {
-		operatorPlatformType = moduleconfig.DefaultPlatformType
+		operatorPlatformType = string(moduleconfig.DefaultPlatformType)
 	}
 
 	moduleCfg, err := moduleconfig.Load()

@@ -95,3 +95,58 @@ func TestLoadPlatformVersionEnvOverridesMountedConfig(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cfg.PlatformVersion).To(Equal("2.23.0"))
 }
+
+func TestParsePlatformType(t *testing.T) {
+	for _, tc := range []struct {
+		raw      string
+		expected PlatformType
+	}{
+		{raw: "unknown", expected: PlatformTypeUnknown},
+		{raw: "Open Data Hub", expected: PlatformTypeOpenDataHub},
+		{raw: "OpenShift AI Self-Managed", expected: PlatformTypeSelfManagedRhoai},
+		{raw: "OpenShift AI Cloud Service", expected: PlatformTypeManagedRhoai},
+		{raw: "", expected: PlatformTypeUnknown},
+		{raw: "OpenDataHub", expected: PlatformTypeUnknown},
+		{raw: "open data hub", expected: PlatformTypeUnknown},
+	} {
+		t.Run(tc.raw, func(t *testing.T) {
+			g := NewWithT(t)
+
+			g.Expect(ParsePlatformType(tc.raw)).To(Equal(tc.expected))
+		})
+	}
+}
+
+func TestLoadPlatformTypeFromEnv(t *testing.T) {
+	g := NewWithT(t)
+
+	t.Setenv(EnvPrefix+"_PLATFORM_TYPE", string(PlatformTypeSelfManagedRhoai))
+
+	cfg, err := LoadFromFS(nil)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cfg.PlatformType).To(Equal(PlatformTypeSelfManagedRhoai))
+}
+
+func TestLoadPlatformTypeUnsetEnvUsesDefault(t *testing.T) {
+	g := NewWithT(t)
+
+	_ = os.Unsetenv(EnvPrefix + "_PLATFORM_TYPE")
+
+	cfg, err := LoadFromFS(nil)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cfg.PlatformType).To(Equal(DefaultPlatformType))
+	g.Expect(cfg.PlatformType).To(Equal(PlatformTypeUnknown))
+}
+
+// Load must keep whatever raw value arrived rather than normalizing it:
+// ParsePlatformType is the explicit normalizer.
+func TestLoadPlatformTypeUnrecognizedValueKeptRaw(t *testing.T) {
+	g := NewWithT(t)
+
+	t.Setenv(EnvPrefix+"_PLATFORM_TYPE", "OpenDataHub")
+
+	cfg, err := LoadFromFS(nil)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cfg.PlatformType).To(Equal(PlatformType("OpenDataHub")))
+	g.Expect(ParsePlatformType(string(cfg.PlatformType))).To(Equal(PlatformTypeUnknown))
+}

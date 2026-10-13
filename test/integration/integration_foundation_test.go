@@ -11,6 +11,7 @@ import (
 
 	componentsv1alpha1 "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	feastoperatorcontroller "github.com/opendatahub-io/feast-module-operator/internal/controller/feastoperator"
+	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
 	"github.com/opendatahub-io/feast-module-operator/test/support"
 )
 
@@ -56,7 +57,7 @@ func (ft *foundationTests) testPlatformManifests(t *testing.T) {
 	// RELATED_IMAGE_CRON_JOB is not part of the operator's image param map,
 	// so the value on the deployed workload is exactly the one bundled in
 	// the selected overlay's params.env.
-	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(operatorPlatformType), "RELATED_IMAGE_CRON_JOB")
+	expected := support.OverlayParam(t, feastoperatorcontroller.OverlayFor(moduleconfig.ParsePlatformType(operatorPlatformType)), "RELATED_IMAGE_CRON_JOB")
 
 	g.Eventually(k.Get(ft.workloadDeploy)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(
 		jq.Match(`.spec.template.spec.containers[] | select(.name == "manager") | .env[] | select(.name == "RELATED_IMAGE_CRON_JOB") | .value == "%s"`, expected),

@@ -62,7 +62,7 @@ type Module struct {
 // OverlayFor returns the manifests overlay selected for the given platform
 // type: RHOAI platform types use the RHOAI overlay, everything else (ODH,
 // unknown) falls back to the ODH overlay.
-func OverlayFor(platformType string) string {
+func OverlayFor(platformType moduleconfig.PlatformType) string {
 	switch platformType {
 	case moduleconfig.PlatformTypeSelfManagedRhoai:
 		return overlayRhoai

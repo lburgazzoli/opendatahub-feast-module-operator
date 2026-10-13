@@ -87,7 +87,9 @@ func TestNewModuleProjectsKubeRBACProxyImage(t *testing.T) {
 	const image = "registry.example.com/odh-kube-rbac-proxy@sha256:1234"
 	t.Setenv("RELATED_IMAGE_ODH_KUBE_RBAC_PROXY_IMAGE", image)
 	for _, tc := range []struct {
-		name, platform, overlay string
+		name     string
+		platform moduleconfig.PlatformType
+		overlay  string
 	}{
 		{name: "ODH", platform: moduleconfig.PlatformTypeOpenDataHub, overlay: overlayODH},
 		{name: "RHOAI", platform: moduleconfig.PlatformTypeSelfManagedRhoai, overlay: overlayRhoai},
