@@ -20,10 +20,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/opendatahub-io/opendatahub-operator/v2/api/common"
-	"github.com/opendatahub-io/opendatahub-operator/v2/pkg/cluster"
-	odhtypes "github.com/opendatahub-io/opendatahub-operator/v2/pkg/controller/types"
-	odhdeploy "github.com/opendatahub-io/opendatahub-operator/v2/pkg/deploy"
+	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
+	"github.com/opendatahub-io/odh-platform-utilities/framework/render/kustomize/params"
+	"github.com/opendatahub-io/odh-platform-utilities/pkg/cluster"
 
 	componentApi "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
@@ -34,6 +33,18 @@ const (
 
 	overlayODH   = "overlays/odh"
 	overlayRhoai = "overlays/rhoai"
+
+	// componentLabelKey is the ODH component label applied to rendered
+	// resources and used by watch predicates, the capabilities ConfigMap,
+	// and finalizer cleanup (app.opendatahub.io/<component>).
+	componentLabelKey = "app.opendatahub.io/" + componentName
+
+	// componentLabelValue is the value of the ODH component label.
+	componentLabelValue = "true"
+
+	// partOfLabelKey is the kubernetes recommended part-of label applied
+	// at kustomize render time.
+	partOfLabelKey = "app.kubernetes.io/part-of"
 )
 
 // imageParamMap matches the monolith's imageParamMap.
@@ -46,14 +57,14 @@ var imageParamMap = map[string]string{
 // Module holds process-lifetime state for the feastoperator controller.
 type Module struct {
 	cfg          *moduleconfig.Config
-	manifestInfo odhtypes.ManifestInfo
+	manifestInfo fwtypes.ManifestInfo
 }
 
 // OverlayFor returns the manifests overlay selected for the given platform
 // type: RHOAI platform types use the RHOAI overlay, everything else (ODH,
 // unknown) falls back to the ODH overlay.
 func OverlayFor(platformType string) string {
-	switch common.Platform(platformType) {
+	switch cluster.Platform(platformType) {
 	case cluster.SelfManagedRhoai:
 		return overlayRhoai
 	case cluster.ManagedRhoai:
@@ -63,16 +74,30 @@ func OverlayFor(platformType string) string {
 	}
 }
 
+// imageParamValues resolves the image parameter map from the environment.
+// Empty values are skipped so that only non-empty RELATED_IMAGE_* variables
+// are applied, mirroring the former odhdeploy.ApplyParams semantics.
+func imageParamValues() map[string]string {
+	values := params.FromEnv(imageParamMap)
+	for key, value := range values {
+		if value == "" {
+			delete(values, key)
+		}
+	}
+
+	return values
+}
+
 // NewModule creates a Module with one-shot computed state.
 func NewModule(cfg *moduleconfig.Config) (*Module, error) {
-	mi := odhtypes.ManifestInfo{
+	mi := fwtypes.ManifestInfo{
 		Path:       cfg.ManifestsPath,
 		ContextDir: componentName,
 		SourcePath: OverlayFor(cfg.PlatformType),
 	}
 
 	// Apply image params once at startup (equivalent to Init in the monolith).
-	if err := odhdeploy.ApplyParams(mi.String(), "params.env", imageParamMap); err != nil {
+	if err := params.ApplyAtPath(mi.String(), "params.env", params.Replacement(imageParamValues())); err != nil {
 		return nil, fmt.Errorf("failed to update images on path %s: %w", mi, err)
 	}
 
@@ -84,7 +109,7 @@ func NewModule(cfg *moduleconfig.Config) (*Module, error) {
 
 // initialize appends the pre-resolved manifest info to the pipeline.
 // Feast does not require namespace substitution in params.env.
-func (m *Module) initialize(_ context.Context, rr *odhtypes.ReconciliationRequest) error {
+func (m *Module) initialize(_ context.Context, rr *fwtypes.ReconciliationRequest) error {
 	rr.Manifests = append(rr.Manifests, m.manifestInfo)
 	return nil
 }

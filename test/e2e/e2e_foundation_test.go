@@ -22,7 +22,6 @@ import (
 	feastoperatorcontroller "github.com/opendatahub-io/feast-module-operator/internal/controller/feastoperator"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
 	"github.com/opendatahub-io/feast-module-operator/test/support"
-	"github.com/opendatahub-io/opendatahub-operator/v2/api/common"
 )
 
 // e2ePlatformVersion is the platform version published through the platform
@@ -309,7 +308,7 @@ func (ft *foundationTests) testSpecProjectedToOperand(t *testing.T) {
 
 	current := ft.module.DeepCopy()
 	g.Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(current), current)).To(Succeed())
-	var originalOIDC *common.GatewayOIDCSpec
+	var originalOIDC *componentsv1alpha1.GatewayOIDCSpec
 	if current.Spec.OIDC != nil {
 		originalOIDC = current.Spec.OIDC.DeepCopy()
 	}
@@ -325,7 +324,7 @@ func (ft *foundationTests) testSpecProjectedToOperand(t *testing.T) {
 	})
 
 	patched := current.DeepCopy()
-	patched.Spec.OIDC = &common.GatewayOIDCSpec{IssuerURL: testOIDCIssuerURL}
+	patched.Spec.OIDC = &componentsv1alpha1.GatewayOIDCSpec{IssuerURL: testOIDCIssuerURL}
 	g.Expect(k8sClient.Patch(ctx, patched, client.MergeFrom(current))).To(Succeed())
 
 	g.Eventually(k.Get(ft.module)).WithContext(ctx).WithTimeout(timeout).WithPolling(interval).Should(And(

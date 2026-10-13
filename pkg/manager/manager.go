@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -40,9 +39,8 @@ import (
 	componentsv1alpha1 "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	"github.com/opendatahub-io/feast-module-operator/internal/controller/feastoperator"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
+	fwmanager "github.com/opendatahub-io/odh-platform-utilities/framework/manager"
 	libcache "github.com/opendatahub-io/odh-platform-utilities/pkg/cache"
-	"github.com/opendatahub-io/opendatahub-operator/v2/pkg/cluster"
-	odhmanager "github.com/opendatahub-io/opendatahub-operator/v2/pkg/manager"
 )
 
 const (
@@ -75,9 +73,6 @@ func New(
 	if cfg == nil {
 		return nil, fmt.Errorf("config is nil")
 	}
-
-	viper.Set("rhai-applications-namespace", cfg.ApplicationsNamespace)
-	cluster.SetRHAIApplicationNamespace(cfg.ApplicationsNamespace)
 
 	scheme := NewScheme()
 
@@ -131,9 +126,9 @@ func New(
 		return nil, fmt.Errorf("creating manager: %w", err)
 	}
 
-	mgr := odhmanager.New(
+	mgr := fwmanager.New(
 		ctrlMgr,
-		odhmanager.WithManifestsBasePath(cfg.ManifestsPath),
+		fwmanager.WithManifestsBasePath(cfg.ManifestsPath),
 	)
 
 	if err := feastoperator.NewReconciler(ctx, mgr, cfg, cfg.Release()); err != nil {

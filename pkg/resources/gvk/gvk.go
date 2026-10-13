@@ -17,10 +17,10 @@ limitations under the License.
 package gvk
 
 import (
-	clustergvk "github.com/opendatahub-io/opendatahub-operator/v2/pkg/cluster/gvk"
+	clustergvk "github.com/opendatahub-io/odh-platform-utilities/framework/cluster/gvk"
 )
 
-// Chart generation GVKs re-exported from the upstream operator cluster package.
+// Chart generation GVKs re-exported from the platform utilities framework.
 var (
 	Namespace                      = clustergvk.Namespace
 	Deployment                     = clustergvk.Deployment

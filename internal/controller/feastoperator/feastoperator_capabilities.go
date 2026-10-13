@@ -34,8 +34,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	componentApi "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
-	odhtypes "github.com/opendatahub-io/opendatahub-operator/v2/pkg/controller/types"
-	"github.com/opendatahub-io/opendatahub-operator/v2/pkg/metadata/labels"
+	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
 )
 
 const (
@@ -62,7 +61,7 @@ func boolString(value bool) string {
 //  2. Otherwise fall back to process-level environment defaults (backward compat).
 //
 // The data registry namespace is always rhoai-data-registry (hardcoded).
-func (m *Module) reconcileCapabilitiesConfigMap(ctx context.Context, rr *odhtypes.ReconciliationRequest) error {
+func (m *Module) reconcileCapabilitiesConfigMap(ctx context.Context, rr *fwtypes.ReconciliationRequest) error {
 	log := logf.FromContext(ctx)
 
 	feast, ok := rr.Instance.(*componentApi.FeastOperator)
@@ -83,7 +82,7 @@ func (m *Module) reconcileCapabilitiesConfigMap(ctx context.Context, rr *odhtype
 		if cm.Labels == nil {
 			cm.Labels = map[string]string{}
 		}
-		cm.Labels[labels.ODH.Component(componentName)] = labels.True
+		cm.Labels[componentLabelKey] = componentLabelValue
 		cm.Data = map[string]string{
 			capabilitiesKeyFeatureStoreEnabled: boolString(fsEnabled),
 			capabilitiesKeyDataRegistryEnabled: boolString(drEnabled),
@@ -129,7 +128,7 @@ func (m *Module) resolveCapabilities(feast *componentApi.FeastOperator) (fsEnabl
 // pod template with a hash of the capabilities ConfigMap data. The upstream operator
 // reads the ConfigMap at startup only, so updating the ConfigMap alone is not enough;
 // the annotation change triggers a rolling restart.
-func (m *Module) triggerCapabilityRolloutIfNeeded(ctx context.Context, rr *odhtypes.ReconciliationRequest) error {
+func (m *Module) triggerCapabilityRolloutIfNeeded(ctx context.Context, rr *fwtypes.ReconciliationRequest) error {
 	log := logf.FromContext(ctx)
 
 	cm := &corev1.ConfigMap{}

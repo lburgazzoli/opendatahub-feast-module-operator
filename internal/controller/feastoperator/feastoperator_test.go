@@ -36,11 +36,9 @@ import (
 
 	componentApi "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
-	"github.com/opendatahub-io/opendatahub-operator/v2/api/common"
-	"github.com/opendatahub-io/opendatahub-operator/v2/pkg/cluster"
-
-	odhtypes "github.com/opendatahub-io/opendatahub-operator/v2/pkg/controller/types"
-	"github.com/opendatahub-io/opendatahub-operator/v2/pkg/metadata/labels"
+	fwapi "github.com/opendatahub-io/odh-platform-utilities/framework/api"
+	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
+	"github.com/opendatahub-io/odh-platform-utilities/pkg/cluster"
 )
 
 func newTestModule(t *testing.T) *Module {
@@ -59,8 +57,8 @@ func newTestModule(t *testing.T) *Module {
 	return m
 }
 
-func newTestRR(obj *componentApi.FeastOperator) *odhtypes.ReconciliationRequest {
-	return &odhtypes.ReconciliationRequest{
+func newTestRR(obj *componentApi.FeastOperator) *fwtypes.ReconciliationRequest {
+	return &fwtypes.ReconciliationRequest{
 		Instance:          obj,
 		ManifestsBasePath: "/manifests",
 		Release: (&moduleconfig.Config{
@@ -191,7 +189,7 @@ func TestSetKustomizedParamsWithOIDC(t *testing.T) {
 
 	m := newTestModule(t)
 	obj := newTestFeastOperator()
-	obj.Spec.OIDC = &common.GatewayOIDCSpec{IssuerURL: "https://issuer.example.com"}
+	obj.Spec.OIDC = &componentApi.GatewayOIDCSpec{IssuerURL: "https://issuer.example.com"}
 	rr := newTestRR(obj)
 	g.Expect(m.initialize(context.Background(), rr)).To(Succeed())
 
@@ -203,7 +201,7 @@ func TestSetKustomizedParamsInvalidOIDC(t *testing.T) {
 
 	m := newTestModule(t)
 	obj := newTestFeastOperator()
-	obj.Spec.OIDC = &common.GatewayOIDCSpec{IssuerURL: "not-a-url"}
+	obj.Spec.OIDC = &componentApi.GatewayOIDCSpec{IssuerURL: "not-a-url"}
 	rr := newTestRR(obj)
 	g.Expect(m.initialize(context.Background(), rr)).To(Succeed())
 
@@ -234,8 +232,10 @@ func TestGetSetPlatformRelease(t *testing.T) {
 	// Simulate releases.NewAction() overwriting status.releases with
 	// component releases, then setPlatformRelease appending the platform
 	// entry — this mirrors the actual controller action ordering.
-	obj.SetReleaseStatus([]common.ComponentRelease{
-		{Name: "Feast", Version: "0.64.0"},
+	obj.SetReleaseStatus(fwapi.ComponentReleaseStatus{
+		Releases: []fwapi.ComponentRelease{
+			{Name: "Feast", Version: "0.64.0"},
+		},
 	})
 	g.Expect(getPlatformRelease(obj)).To(Equal(""))
 	setPlatformRelease(obj, "2.21.0")
@@ -263,7 +263,7 @@ func TestCleanupClusterResourcesRunsWhenCapabilityAbsent(t *testing.T) {
 		},
 	}
 
-	rr := &odhtypes.ReconciliationRequest{
+	rr := &fwtypes.ReconciliationRequest{
 		Instance: feast,
 		Client:   cl,
 	}
@@ -289,7 +289,7 @@ func TestCleanupClusterResourcesRunsEvenWhenCapabilitiesManaged(t *testing.T) {
 			Name:      capabilitiesConfigMapName,
 			Namespace: "test-ns",
 			Labels: map[string]string{
-				labels.ODH.Component(componentName): labels.True,
+				componentLabelKey: componentLabelValue,
 			},
 		},
 	}
@@ -310,7 +310,7 @@ func TestCleanupClusterResourcesRunsEvenWhenCapabilitiesManaged(t *testing.T) {
 		},
 	}
 
-	rr := &odhtypes.ReconciliationRequest{
+	rr := &fwtypes.ReconciliationRequest{
 		Instance: feast,
 		Client:   cl,
 	}
@@ -342,7 +342,7 @@ func TestCleanupClusterResourcesRunsWhenBothCapabilitiesRemoved(t *testing.T) {
 			Name:      capabilitiesConfigMapName,
 			Namespace: "test-ns",
 			Labels: map[string]string{
-				labels.ODH.Component(componentName): labels.True,
+				componentLabelKey: componentLabelValue,
 			},
 		},
 	}
@@ -350,7 +350,7 @@ func TestCleanupClusterResourcesRunsWhenBothCapabilitiesRemoved(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "feast-crb",
 			Labels: map[string]string{
-				labels.ODH.Component(componentName): labels.True,
+				componentLabelKey: componentLabelValue,
 			},
 		},
 	}
@@ -358,7 +358,7 @@ func TestCleanupClusterResourcesRunsWhenBothCapabilitiesRemoved(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "feast-cr",
 			Labels: map[string]string{
-				labels.ODH.Component(componentName): labels.True,
+				componentLabelKey: componentLabelValue,
 			},
 		},
 	}
@@ -372,7 +372,7 @@ func TestCleanupClusterResourcesRunsWhenBothCapabilitiesRemoved(t *testing.T) {
 		},
 	}
 
-	rr := &odhtypes.ReconciliationRequest{
+	rr := &fwtypes.ReconciliationRequest{
 		Instance: feast,
 		Client:   cl,
 	}

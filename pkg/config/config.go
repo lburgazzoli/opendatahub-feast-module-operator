@@ -26,7 +26,7 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/spf13/viper"
 
-	"github.com/opendatahub-io/opendatahub-operator/v2/api/common"
+	fwapi "github.com/opendatahub-io/odh-platform-utilities/framework/api"
 	ofVersion "github.com/operator-framework/api/pkg/lib/version"
 )
 
@@ -127,12 +127,12 @@ type PprofConfig struct {
 	BindAddress string `mapstructure:"bind-address"`
 }
 
-// Release builds a common.Release from the configured platform type and
+// Release builds a fwapi.Release from the configured platform type and
 // version. If PlatformVersion is not valid semver, the version defaults
 // to 0.0.0.
-func (c *Config) Release() common.Release {
-	rel := common.Release{
-		Name: common.Platform(c.PlatformType),
+func (c *Config) Release() fwapi.Release {
+	rel := fwapi.Release{
+		Name: fwapi.Platform(c.PlatformType),
 	}
 
 	if c.PlatformVersion != "" {
