@@ -61,6 +61,12 @@ const (
 	DefaultFeatureStoreEnabled = true
 	DefaultDataRegistryEnabled = true
 
+	// Platform-type display names, matching the values written by the
+	// orchestrator / Makefile into the platform-type config key.
+	PlatformTypeOpenDataHub      = "Open Data Hub"
+	PlatformTypeSelfManagedRhoai = "OpenShift AI Self-Managed"
+	PlatformTypeManagedRhoai     = "OpenShift AI Cloud Service"
+
 	// ConfigPathEnvVar is the environment variable that points to the mounted
 	// ConfigMap directory (or a single config file).
 	ConfigPathEnvVar = "ODH_MODULE_OPERATOR_CONFIGURATION_PATH"

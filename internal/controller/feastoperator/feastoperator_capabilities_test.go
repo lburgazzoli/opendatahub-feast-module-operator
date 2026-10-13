@@ -34,7 +34,6 @@ import (
 	componentApi "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
 	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
-	"github.com/opendatahub-io/odh-platform-utilities/pkg/cluster"
 )
 
 func initCapabilitiesTestScheme() *runtime.Scheme {
@@ -49,7 +48,7 @@ func newCapabilitiesTestModule(t *testing.T, featureStoreEnabled, dataRegistryEn
 
 	repoRoot := filepath.Join("..", "..", "..")
 	cfg := &moduleconfig.Config{
-		PlatformType:          string(cluster.OpenDataHub),
+		PlatformType:          moduleconfig.PlatformTypeOpenDataHub,
 		PlatformVersion:       "1.0.0",
 		ManifestsPath:         filepath.Join(repoRoot, "config", "manifests"),
 		ApplicationsNamespace: "test-ns",
@@ -73,7 +72,7 @@ func newCapabilitiesRR(t *testing.T, cl client.Client, obj *componentApi.FeastOp
 		Client:            cl,
 		ManifestsBasePath: filepath.Join(repoRoot, "config", "manifests"),
 		Release: (&moduleconfig.Config{
-			PlatformType:    string(cluster.OpenDataHub),
+			PlatformType:    moduleconfig.PlatformTypeOpenDataHub,
 			PlatformVersion: "1.0.0",
 		}).Release(),
 	}

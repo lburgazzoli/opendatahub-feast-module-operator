@@ -25,11 +25,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,12 +42,15 @@ import (
 	"github.com/opendatahub-io/feast-module-operator/internal/controller/feastoperator"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
 	fwmanager "github.com/opendatahub-io/odh-platform-utilities/framework/manager"
-	libcache "github.com/opendatahub-io/odh-platform-utilities/pkg/cache"
 )
 
 const (
 	healthCheckName = "healthz"
 	readyCheckName  = "readyz"
+
+	// annotationLastAppliedConfiguration is the annotation added by
+	// kubectl apply that is unnecessary when using server-side apply.
+	annotationLastAppliedConfiguration = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 type Option func(*ctrl.Options)
@@ -93,7 +98,7 @@ func New(
 		LeaderElectionID:              cfg.Controller.LeaderElection.ID,
 		LeaderElectionReleaseOnCancel: true,
 		Cache: cache.Options{
-			DefaultTransform: libcache.StripUnusedFields(),
+			DefaultTransform: stripUnusedFields(),
 			ByObject: map[client.Object]cache.ByObject{
 				&componentsv1alpha1.FeastOperator{}:         {Label: k8slabels.Everything()},
 				&apiextensionsv1.CustomResourceDefinition{}: {Label: k8slabels.Everything()},
@@ -143,4 +148,31 @@ func New(
 	}
 
 	return mgr, nil
+}
+
+// stripUnusedFields returns a cache transform that removes managedFields
+// and the last-applied-configuration annotation from cached objects.
+// Both are unnecessary when using server-side apply.
+//
+// Inlined from odh-platform-utilities/pkg/cache StripUnusedFields
+// (Apache-2.0) to drop the root-module dependency.
+func stripUnusedFields() toolscache.TransformFunc {
+	return func(obj any) (any, error) {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			// non-k8s objects pass through unchanged
+			//nolint:nilerr
+			return obj, nil
+		}
+
+		accessor.SetManagedFields(nil)
+
+		annotations := accessor.GetAnnotations()
+		if annotations != nil {
+			delete(annotations, annotationLastAppliedConfiguration)
+			accessor.SetAnnotations(annotations)
+		}
+
+		return obj, nil
+	}
 }

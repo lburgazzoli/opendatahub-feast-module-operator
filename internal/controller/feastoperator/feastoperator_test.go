@@ -38,14 +38,13 @@ import (
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
 	fwapi "github.com/opendatahub-io/odh-platform-utilities/framework/api"
 	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
-	"github.com/opendatahub-io/odh-platform-utilities/pkg/cluster"
 )
 
 func newTestModule(t *testing.T) *Module {
 	t.Helper()
 
 	cfg := &moduleconfig.Config{
-		PlatformType:          string(cluster.OpenDataHub),
+		PlatformType:          moduleconfig.PlatformTypeOpenDataHub,
 		PlatformVersion:       "1.0.0",
 		ManifestsPath:         "/manifests",
 		ApplicationsNamespace: "test-ns",
@@ -62,7 +61,7 @@ func newTestRR(obj *componentApi.FeastOperator) *fwtypes.ReconciliationRequest {
 		Instance:          obj,
 		ManifestsBasePath: "/manifests",
 		Release: (&moduleconfig.Config{
-			PlatformType:    string(cluster.OpenDataHub),
+			PlatformType:    moduleconfig.PlatformTypeOpenDataHub,
 			PlatformVersion: "1.0.0",
 		}).Release(),
 	}
@@ -90,8 +89,8 @@ func TestNewModuleProjectsKubeRBACProxyImage(t *testing.T) {
 	for _, tc := range []struct {
 		name, platform, overlay string
 	}{
-		{name: "ODH", platform: string(cluster.OpenDataHub), overlay: overlayODH},
-		{name: "RHOAI", platform: string(cluster.SelfManagedRhoai), overlay: overlayRhoai},
+		{name: "ODH", platform: moduleconfig.PlatformTypeOpenDataHub, overlay: overlayODH},
+		{name: "RHOAI", platform: moduleconfig.PlatformTypeSelfManagedRhoai, overlay: overlayRhoai},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			manifests := t.TempDir()
@@ -123,7 +122,7 @@ func TestNewModule(t *testing.T) {
 	g := NewWithT(t)
 
 	cfg := &moduleconfig.Config{
-		PlatformType:    string(cluster.OpenDataHub),
+		PlatformType:    moduleconfig.PlatformTypeOpenDataHub,
 		PlatformVersion: "1.0.0",
 		ManifestsPath:   "/manifests",
 	}

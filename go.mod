@@ -7,7 +7,6 @@ require (
 	github.com/invopop/jsonschema v0.14.0
 	github.com/lburgazzoli/gomega-matchers v0.4.1-0.20260219145423-4061a5fb8799
 	github.com/onsi/gomega v1.41.0
-	github.com/opendatahub-io/odh-platform-utilities v0.4.1-0.20261012121829-3163630a4c27
 	github.com/opendatahub-io/odh-platform-utilities/framework v0.0.0-20261012121829-3163630a4c27
 	github.com/operator-framework/api v0.42.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0

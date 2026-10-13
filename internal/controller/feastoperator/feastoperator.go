@@ -22,7 +22,6 @@ import (
 
 	fwtypes "github.com/opendatahub-io/odh-platform-utilities/framework/controller/types"
 	"github.com/opendatahub-io/odh-platform-utilities/framework/render/kustomize/params"
-	"github.com/opendatahub-io/odh-platform-utilities/pkg/cluster"
 
 	componentApi "github.com/opendatahub-io/feast-module-operator/api/components/v1alpha1"
 	moduleconfig "github.com/opendatahub-io/feast-module-operator/pkg/config"
@@ -64,10 +63,10 @@ type Module struct {
 // type: RHOAI platform types use the RHOAI overlay, everything else (ODH,
 // unknown) falls back to the ODH overlay.
 func OverlayFor(platformType string) string {
-	switch cluster.Platform(platformType) {
-	case cluster.SelfManagedRhoai:
+	switch platformType {
+	case moduleconfig.PlatformTypeSelfManagedRhoai:
 		return overlayRhoai
-	case cluster.ManagedRhoai:
+	case moduleconfig.PlatformTypeManagedRhoai:
 		return overlayRhoai
 	default:
 		return overlayODH
