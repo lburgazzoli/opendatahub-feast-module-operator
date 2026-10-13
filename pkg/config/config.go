@@ -47,8 +47,15 @@ const (
 	KeyFeatureStoreEnabled = "feature-store-enabled"
 	KeyDataRegistryEnabled = "data-registry-enabled"
 
-	DefaultApplicationsNS  = "opendatahub"
-	DefaultPlatformType    = PlatformTypeUnknown
+	DefaultApplicationsNS = "opendatahub"
+
+	// DefaultPlatformType is the platform type used when the platform-type
+	// config key and ODH_MODULE_OPERATOR_PLATFORM_TYPE env var are both
+	// unset. ODH is the community default and matches the reference
+	// module's behavior; overlay selection is unaffected because OverlayFor
+	// already routed unknown to the ODH overlay via its default case.
+	DefaultPlatformType = PlatformTypeOpenDataHub
+
 	DefaultPlatformVersion = "unknown"
 
 	DefaultMetricsBindAddr    = ":8080"
@@ -84,17 +91,32 @@ const (
 )
 
 // ParsePlatformType normalizes a raw config value to a known PlatformType.
-// Unrecognized values return PlatformTypeUnknown (lenient by design —
-// preserves the "unknown → ODH overlay" fallback).
+// It accepts the exact display-name constants ("Open Data Hub",
+// "OpenShift AI Self-Managed", "OpenShift AI Cloud Service") plus their
+// identifier forms ("OpenDataHub", "SelfManagedRhoai", "ManagedRhoai") as a
+// safety net for emitters (e.g. older Makefile invocations) that produce
+// Go-style identifiers. All other values, including "" and any other
+// variant, return PlatformTypeUnknown (lenient by design — preserves the
+// "unknown → ODH overlay" fallback).
 func ParsePlatformType(s string) PlatformType {
 	switch pt := PlatformType(s); pt {
 	case PlatformTypeOpenDataHub,
 		PlatformTypeSelfManagedRhoai,
 		PlatformTypeManagedRhoai:
 		return pt
-	default:
-		return PlatformTypeUnknown
 	}
+
+	// Identifier forms: exact matches only, case-sensitive.
+	switch s {
+	case "OpenDataHub":
+		return PlatformTypeOpenDataHub
+	case "SelfManagedRhoai":
+		return PlatformTypeSelfManagedRhoai
+	case "ManagedRhoai":
+		return PlatformTypeManagedRhoai
+	}
+
+	return PlatformTypeUnknown
 }
 
 // structuredExtensions is the set of file extensions that are parsed as

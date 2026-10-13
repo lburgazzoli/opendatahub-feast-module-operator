@@ -201,7 +201,7 @@ export ODH_PLATFORM_TYPE
 
 ifneq ($(ODH_PLATFORM_TYPE),)
 ifeq ($(ODH_PLATFORM_TYPE),odh)
-ODH_PLATFORM_TYPE_VALUE := OpenDataHub
+ODH_PLATFORM_TYPE_VALUE := Open Data Hub
 else ifeq ($(ODH_PLATFORM_TYPE),rhoai)
 ODH_PLATFORM_TYPE_VALUE := OpenShift AI Self-Managed
 else ifeq ($(ODH_PLATFORM_TYPE),managed-rhoai)

@@ -106,8 +106,17 @@ func TestParsePlatformType(t *testing.T) {
 		{raw: "OpenShift AI Self-Managed", expected: PlatformTypeSelfManagedRhoai},
 		{raw: "OpenShift AI Cloud Service", expected: PlatformTypeManagedRhoai},
 		{raw: "", expected: PlatformTypeUnknown},
-		{raw: "OpenDataHub", expected: PlatformTypeUnknown},
+		// Identifier forms are accepted as a safety net for emitters that
+		// produce Go-style identifiers.
+		{raw: "OpenDataHub", expected: PlatformTypeOpenDataHub},
+		{raw: "SelfManagedRhoai", expected: PlatformTypeSelfManagedRhoai},
+		{raw: "ManagedRhoai", expected: PlatformTypeManagedRhoai},
+		// Everything else — including lowercase or partial variants — stays
+		// Unknown.
 		{raw: "open data hub", expected: PlatformTypeUnknown},
+		{raw: "selfManagedRhoai", expected: PlatformTypeUnknown},
+		{raw: "managedRhoai", expected: PlatformTypeUnknown},
+		{raw: "odh", expected: PlatformTypeUnknown},
 	} {
 		t.Run(tc.raw, func(t *testing.T) {
 			g := NewWithT(t)
@@ -135,7 +144,7 @@ func TestLoadPlatformTypeUnsetEnvUsesDefault(t *testing.T) {
 	cfg, err := LoadFromFS(nil)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cfg.PlatformType).To(Equal(DefaultPlatformType))
-	g.Expect(cfg.PlatformType).To(Equal(PlatformTypeUnknown))
+	g.Expect(cfg.PlatformType).To(Equal(PlatformTypeOpenDataHub))
 }
 
 // Load must keep whatever raw value arrived rather than normalizing it:
@@ -143,10 +152,10 @@ func TestLoadPlatformTypeUnsetEnvUsesDefault(t *testing.T) {
 func TestLoadPlatformTypeUnrecognizedValueKeptRaw(t *testing.T) {
 	g := NewWithT(t)
 
-	t.Setenv(EnvPrefix+"_PLATFORM_TYPE", "OpenDataHub")
+	t.Setenv(EnvPrefix+"_PLATFORM_TYPE", "odh")
 
 	cfg, err := LoadFromFS(nil)
 	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(cfg.PlatformType).To(Equal(PlatformType("OpenDataHub")))
+	g.Expect(cfg.PlatformType).To(Equal(PlatformType("odh")))
 	g.Expect(ParsePlatformType(string(cfg.PlatformType))).To(Equal(PlatformTypeUnknown))
 }
