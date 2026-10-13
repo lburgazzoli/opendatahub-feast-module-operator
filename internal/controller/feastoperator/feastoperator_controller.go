@@ -122,6 +122,7 @@ func NewReconciler(
 		WithAction(kustomize.NewAction(
 			kustomize.WithLabel(componentLabelKey, componentLabelValue),
 			kustomize.WithLabel(partOfLabelKey, componentName),
+			kustomize.WithNamespaceFn(applicationsNamespaceGetter(cfg)),
 		)).
 		WithAction(m.migrateDeploymentSelector).
 		WithAction(deploy.NewAction(
@@ -133,7 +134,7 @@ func NewReconciler(
 			deployments.InNamespace(cfg.ApplicationsNamespace),
 		)).
 		WithAction(gc.NewAction(
-			gcNamespaceGetter(cfg),
+			applicationsNamespaceGetter(cfg),
 		)).
 		WithFinalizer(m.cleanupClusterResources).
 		WithConditions(
@@ -151,9 +152,11 @@ func NewReconciler(
 	return nil
 }
 
-// gcNamespaceGetter returns the namespace getter used by the gc action for
-// its RBAC rules review.
-func gcNamespaceGetter(cfg *moduleconfig.Config) func(context.Context, *fwtypes.ReconciliationRequest) (string, error) {
+// applicationsNamespaceGetter returns the applications namespace getter shared by
+// the kustomize render action (as the default namespace for rendered resources,
+// replacing the removed cluster.SetRHAIApplicationNamespace global) and the gc
+// action (as the namespace for its RBAC rules review).
+func applicationsNamespaceGetter(cfg *moduleconfig.Config) func(context.Context, *fwtypes.ReconciliationRequest) (string, error) {
 	return func(_ context.Context, _ *fwtypes.ReconciliationRequest) (string, error) {
 		return cfg.ApplicationsNamespace, nil
 	}
